@@ -47,9 +47,10 @@ int main(int argc, char *argv[])
         vector1 = malloc(SIZE * sizeof(int));
         vector2 = malloc(SIZE * sizeof(int));
 
-        startTime = MPI_Wtime();
         createVector(vector1, SIZE);
         createVector(vector2, SIZE);
+
+        startTime = MPI_Wtime();
         //printf("Result %ld\n", mult(vector1, vector2, SIZE));
     }
 

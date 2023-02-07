@@ -27,11 +27,10 @@ int main(int argc, char *argv[])
     int* vector1 = malloc(SIZE * sizeof(int));
     int* vector2 = malloc(SIZE * sizeof(int));
 
-    time_t begin = time(NULL);
-
     createVector(vector1, SIZE);
     createVector(vector2, SIZE);
 
+    time_t begin = time(NULL);
     printf("Result %ld\n", mult(vector1, vector2, SIZE));
     time_t end = time(NULL);
     printf("Total time is %ld seconds\n", (end - begin));
