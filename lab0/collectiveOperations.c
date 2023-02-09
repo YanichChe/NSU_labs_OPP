@@ -3,20 +3,24 @@
 #include "stdlib.h"
 #include "limits.h"
 
-const int SIZE = INT_MAX / 2;
+const unsigned int SIZE = 99000;
 
-void createVector(int* vector, int size)
+void createVector(int* vector1, int* vector2, int size)
 {
-    for (int i = 0; i < size; i++) {
-        vector[i] = (rand() % 100);
+    for (unsigned int i = 0; i < size; i++) {
+        vector1[i] = (rand() % 100);
+        vector2[i] = (rand() % 100);
     }
 }
 
-long mult(const int* vector1, const int* vector2, int size)
+long long mult(const int* vector1, const int* vector2, int size)
 {
-    long result = 0;
+    long long result = 0;
     for (int i = 0; i < size; i++) {
-        result += vector1[i] * vector2[i];
+        for (int j = 0; j < SIZE; j++)
+        {
+            result += vector1[i] * vector2[j];
+        }
     }
     return result;
 }
@@ -28,10 +32,9 @@ int main(int argc, char *argv[])
     int* vector1;
     int* vector2;
 
-    int* currentVector1;
-    int* currentVector2;
+    int* currentVector;
 
-    long totalResult, currentResult;
+    long long totalResult, currentResult;
     double startTime, endTime;
 
     MPI_Init(&argc, &argv);
@@ -39,40 +42,35 @@ int main(int argc, char *argv[])
     MPI_Comm_size( MPI_COMM_WORLD, &numProc);
 
     int currentSize = SIZE / numProc;
+    vector2 = malloc(SIZE * sizeof(int));
 
     if (rank == 0)
     {
         totalResult = 0;
 
         vector1 = malloc(SIZE * sizeof(int));
-        vector2 = malloc(SIZE * sizeof(int));
-
-        createVector(vector1, SIZE);
-        createVector(vector2, SIZE);
+        createVector(vector1, vector2, SIZE);
 
         startTime = MPI_Wtime();
-        //printf("Result %ld\n", mult(vector1, vector2, SIZE));
     }
 
-    currentVector1 = malloc(currentSize * sizeof(int));
-    currentVector2 = malloc(currentSize * sizeof(int));
+    currentVector = malloc(currentSize * sizeof(int));
 
     MPI_Scatter(vector1, currentSize, MPI_INT,
-                currentVector1, currentSize, MPI_INT, 0, MPI_COMM_WORLD);
-    MPI_Scatter(vector2, currentSize, MPI_INT,
-                currentVector2, currentSize, MPI_INT, 0, MPI_COMM_WORLD);
+                currentVector, currentSize, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(vector2 , SIZE, MPI_INT, 0, MPI_COMM_WORLD);
 
-    currentResult = mult(currentVector1, currentVector2, currentSize);
+    currentResult = mult(currentVector, vector2, currentSize);
 
     MPI_Reduce(&currentResult, &totalResult, 1,
-               MPI_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+               MPI_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+
     if (rank == 0)
     {
-        printf("Total result = %ld\n", totalResult);
+        printf("Total result = %lld\n", totalResult);
         endTime = MPI_Wtime();
         printf("Total time is %f\n", endTime - startTime);
     }
-
 
     MPI_Finalize();
 

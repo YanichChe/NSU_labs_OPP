@@ -3,35 +3,36 @@
 #include "time.h"
 #include "limits.h"
 
-const unsigned int SIZE = INT_MAX / 2;
+int SIZE = 99000;
 
-void createVector(int* vector,unsigned int size)
+void createVector(int* vector1, int* vector2, int size)
 {
-    for (unsigned int i = 0; i < size; i++) {
-        vector[i] = rand() % 100;
+    for (long long int i = 0; i < size; i++) {
+        vector1[i] = rand() % 100;
+        vector2[i] = rand() % 100;
     }
 }
 
-long mult(int* vector1, int* vector2, unsigned int size)
+long long int mult(int* vector1, int* vector2, int size)
 {
-    long result = 0;
-    for (unsigned int i = 0; i < size; i++) {
-        result += vector1[i] * vector2[i];
+    long long int result = 0;
+    for (int i = 0; i < size; i++) {
+        for (int j = 0; j < size; j++){
+            result += vector1[i] * vector2[i];
+        }
     }
     return result;
 }
 
 int main(int argc, char *argv[])
 {
-
     int* vector1 = malloc(SIZE * sizeof(int));
     int* vector2 = malloc(SIZE * sizeof(int));
 
-    createVector(vector1, SIZE);
-    createVector(vector2, SIZE);
+    createVector(vector1, vector2, SIZE);
 
     time_t begin = time(NULL);
-    printf("Result %ld\n", mult(vector1, vector2, SIZE));
+    printf("Result %lld\n", mult(vector1, vector2, SIZE));
     time_t end = time(NULL);
     printf("Total time is %ld seconds\n", (end - begin));
 
