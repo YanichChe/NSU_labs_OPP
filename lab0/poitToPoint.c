@@ -3,7 +3,7 @@
 #include "mpi.h"
 #include "stdio.h"
 #include "stdlib.h"
-#include "limits.h"ls
+#include "limits.h"
 
 const int SIZE = 99000;
 
@@ -74,11 +74,12 @@ int main(int argc, char *argv[])
 
             MPI_Send(currentVector, currentSize, MPI_INT, i, 1, MPI_COMM_WORLD);
             MPI_Send(vector2, SIZE, MPI_INT, i, 1, MPI_COMM_WORLD);
+        }
 
+        for (int i = 0; i < numProc; i++)
+        {
             MPI_Recv(&currentResult, 1, MPI_LONG_LONG,i, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-
             totalResult += currentResult;
-
         }
     }
 
