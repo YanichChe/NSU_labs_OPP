@@ -53,14 +53,15 @@ int main(void)
         if (countIterations > MAX_ITERATION_COUNT && prevRes > res)
         {
             printf("Wrong tau...\n");
-            countIterations = 0;
-            copyVector(x, copyX);
-            tau = -tau;
+            free(A);
+            free(x);
+            free(b);
+            free(copyX);
             return EXIT_SUCCESS;
         }
-
         prevRes = res;
     }
+
     time_t end = time(NULL);
     //printVector(x);
     printf("Total time is %ld seconds", (end - begin));
