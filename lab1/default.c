@@ -1,10 +1,9 @@
 #include <math.h>
-#include <mpi.h>
 #include <stdio.h>
 #include <time.h>
 #include <stdlib.h>
 
-#define N 1000
+#define N 6000
 #define EPSILON pow(10, -5)
 #define MAX_ITERATION_COUNT 50000
 
@@ -20,7 +19,7 @@ double* mul(const double* matrix, const double* vector, double* result, int shif
 void countNewX(double* x, double* vector);
 
 double tau =  0.01;
-int main(void)
+int main(int argc, char **argv)
 {
     srand (time (NULL));
 
@@ -37,9 +36,6 @@ int main(void)
     int countIterations = 0;
     double res = 1;
     double prevRes = 0;
-
-    printMatrix(A);
-    printVector(b);
 
     time_t begin = time(NULL);
     while(res > EPSILON)
@@ -65,8 +61,7 @@ int main(void)
 
     time_t end = time(NULL);
 
-    printVector(x);
-    printf("Total time is %ld seconds", (end - begin));
+    printf("Total time is %ld seconds\n", (end - begin));
     free(A);
     free(x);
     free(b);
