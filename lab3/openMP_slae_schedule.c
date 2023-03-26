@@ -3,102 +3,19 @@
 #include <stdlib.h>
 #include <omp.h>
 
-#define N 5000
+#define N 6000
 #define EPSILON 1e-6
 #define MAX_ITERATION_COUNT 50000
-#define TAU  1e-5
-
-void generate_matrix(double* matrix);
-void generate_vector(double* vector);
-
-void print_matrix(const double* matrix);
-void print_vector(const double* vector);
-
-double count_square_norm(const double *vector, int size);
-void set_matrix_part(int* line_counts, int* offsets, int size, int thread_num);
-
-void mul(const double* matrix, const double* vector, double* result, int lines);
-void sub_vectors(const double* vector1, const double* vector2, double* result, int size);
-void count_new_x(double* x, const double* vector, int size);
-void check(double* A, double*x , double* b);
-
-int main(int argc, char **argv)
+#define TAU 1e-5
+double calcSquareNorm(const double* vector)
 {
-    double* A = malloc(sizeof(double) * N * N);
-    double* x = malloc(sizeof(double) * N);
-    double* b = malloc(sizeof(double) * N);
-
-    int  num_threads = omp_get_max_threads();
-    int* line_counts = malloc(sizeof(int) * num_threads);
-    int* offsets = malloc(sizeof(int) * num_threads);
-    double *buffer = malloc(sizeof(double) * N);
-
-    set_matrix_part(line_counts, offsets, N, num_threads);
-
-    generate_matrix(A);
-    generate_vector(x);
-    generate_vector(b);
-
-    double b_norm = sqrt(count_square_norm(b, N));
-    int count_iterations = 0;
-    double res = 1;
-    double sum_norm = 0;
-
-    double begin = omp_get_wtime();
-    //print_matrix(A);
-    //print_vector(b);
-
-    int iter_count = 0;
-
-    int thread_id = omp_get_thread_num();
-    for (iter_count = 0; res > EPSILON && iter_count < MAX_ITERATION_COUNT; ++iter_count)
+    double norm = 0;
+    for (int i = 0; i < N; i++)
     {
-        mul(A + offsets[thread_id] * N, x, buffer + offsets[thread_id], line_counts[thread_id]);
-        sub_vectors(buffer + offsets[thread_id], b + offsets[thread_id], buffer + offsets[thread_id], line_counts[thread_id]);
-
-        count_new_x(x + offsets[thread_id], buffer + offsets[thread_id], line_counts[thread_id]);
-
-
-        sum_norm = 0;
-
-        sum_norm += count_square_norm(buffer + offsets[thread_id], line_counts[thread_id]);
-
-        res = sqrt(sum_norm) / b_norm;
+        norm += vector[i] * vector[i];
     }
-
-    double end = omp_get_wtime();
-
-    if (count_iterations == MAX_ITERATION_COUNT){
-        printf("Wrong tau\n");
-    }
-
-    else{
-        printf("%f \n", (end - begin));
-        //check(A, x, b);
-        //print_vector(x);
-    }
-
-    free(A);
-    free(x);
-    free(b);
-    free(buffer);
-
-    return EXIT_SUCCESS;
+    return norm;
 }
-
-void check(double* A, double*x , double* b){
-    double * result = malloc(sizeof(double) * N);
-    mul(A,x, result, N);
-    for (int i = 0; i < N; i++){
-        if (result[i] - b[i] < EPSILON || b[i] - result[i] < EPSILON){}
-        else{
-            printf("not okay\n");
-            return;
-        }
-    }
-    printf("correct\n");
-}
-
 void generate_vector(double* vector)
 {
     for (int i = 0; i < N; i++)
@@ -125,93 +42,94 @@ void generate_matrix(double* matrix)
     }
 }
 
-
-void print_matrix(const double* matrix)
-{
-    for (int i = 0; i < N; i++)
-    {
-        for (int j = 0; j < N; j++)
-        {
-            printf("%f ", matrix[i * N + j]);
-        }
-
-        printf("\n");
-    }
-
-    printf("\n");
-}
-
-void print_vector(const double* vector)
-{
-    for(int i = 0; i < N; i++)
-    {
-        printf("%f ", vector[i]);
-    }
-
-    printf("\n");
-}
-
-
-double count_square_norm(const double* vector, int size)
-{
-    double norm_value = 0;
-
-    #pragma omp parallel for schedule(runtime) reduction(+: norm_value)
-    for (int i = 0; i < size; i++)
-    {
-        norm_value += vector[i] * vector[i];
-    }
-
-    return norm_value;
-}
-
-void set_matrix_part(int* line_counts, int* offsets, int size, int thread_num)
-{
-    int offset = 0;
-    for (int i = 0; i < thread_num; ++i)
-    {
-        line_counts[i] = size / thread_num;
-
-        if (i < size % thread_num)
-        {
-            ++line_counts[i];
-        }
-
-        offsets[i] = offset;
-        offset += line_counts[i];
-
-    }
-}
-
-void mul(const double* matrix, const double* vector, double* result, int lines)
-{
-    #pragma omp parallel for schedule(runtime)
-    for (int i = 0; i < lines; i++)
-    {
+void check(double* A, double*x , double* b){
+    double * result = malloc(sizeof(double) * N);
+    for(int i = 0; i < N; i++) {
         result[i] = 0;
-
-        for (int j = 0; j < N; j++)
-        {
-            result[i] += matrix[i * N + j] * vector[j];
+        for(int j = 0; j < N; j++) {
+            result[i] += A[i * N + j] * x[j];
         }
     }
-
-}
-
-void sub_vectors(const double* vector1, const double* vector2, double* result, int size)
-{
-    #pragma omp parallel for schedule(runtime)
-    for (int i = 0; i < size; i++)
-    {
-        result[i] = vector1[i] - vector2[i];
+    for (int i = 0; i < N; i++){
+        if (result[i] - b[i] < EPSILON || b[i] - result[i] < EPSILON){}
+        else{
+            printf("not okay\n");
+            return;
+        }
     }
+    printf("correct\n");
 }
 
-void count_new_x(double* x, const double* vector, int size)
-{
-    #pragma omp parallel for schedule(runtime)
-    for (int i = 0; i < size; i++)
+int main(int argc, char *argv[]) {
+
+    double* A = malloc(sizeof(double) * N * N);
+    double* x = malloc(sizeof(double) * N);
+    double* b = malloc(sizeof(double) * N);
+
+    double *buffer = malloc(sizeof(double) * N);
+
+    generate_matrix(A);
+    generate_vector(x);
+    generate_vector(b);
+
+    double norm_b = sqrt(calcSquareNorm(b));
+    double res = 1;
+    int iterationCount = 1;
+
+    int start, end;
+    start = omp_get_wtime();
+    unsigned int i, j;
+    double norm;
+
+#pragma omg parallel private(i, j)
     {
-        x[i] = x[i] - TAU * vector[i];
+        while (res > EPSILON && iterationCount < MAX_ITERATION_COUNT) {
+
+#pragma omp parallel for private (j) schedule(runtime)
+            for(i = 0; i < N; i++) {
+                buffer[i] = 0;
+                for(j = 0; j < N; j++) {
+                    buffer[i] += A[i * N + j] * x[j];
+                }
+            }
+
+#pragma omp parallel for schedule(runtime)
+            for (i = 0; i < N; i++) {
+                buffer[i] = buffer[i] - b[i];
+            }
+
+#pragma omp single
+            norm = 0;
+
+#pragma omp parallel for reduction (+:norm) schedule(runtime)
+            for (i = 0; i < N; i++){
+                norm += buffer[i] * buffer[i];
+            }
+
+#pragma omp parallel for schedule(runtime)
+            for (i = 0; i < N; ++i) {
+                x[i] = x[i] - buffer[i] * TAU;
+            }
+
+#pragma omp single
+            {
+                res = sqrt(norm / norm_b);
+                printf("%f\n", res);
+                iterationCount++;
+            }
+        }
     }
+    end = omp_get_wtime();
+    printf("Total time is %d seconds\n", (end - start));
+    check(A, x, b);
+
+    free(A);
+    free(x);
+    free(b);
+    free(buffer);
+
+    return 0;
 }
+
+
+

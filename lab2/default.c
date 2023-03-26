@@ -15,7 +15,7 @@ void printVector(const double* vector);
 
 double countNorm(const double* vector);
 double* subVectors(const double* vector1, const double* vector2,double* result);
-double* mul(const double* matrix, const double* vector, double* result, int shift);
+void mul(const double* matrix, const double* vector, double* result, int shift);
 void countNewX(double* x, double* vector);
 
 double tau =  0.01;
@@ -23,7 +23,7 @@ int main(int argc, char **argv)
 {
     srand (time (NULL));
 
-    double* A = malloc(sizeof(double) * N * N);
+    double* A = (double*)malloc(sizeof(double) * N * N);
     generateMatrix(A);
 
     double* x = malloc(sizeof(double) * N);
@@ -129,7 +129,7 @@ void printVector(const double* vector)
     printf("\n");
 }
 
-double* mul(const double* matrix, const double* vector, double* result, int shift)
+void mul(const double* matrix, const double* vector, double* result, int shift)
 {
     for (int i = 0; i < shift; i++)
     {
