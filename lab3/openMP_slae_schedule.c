@@ -91,29 +91,22 @@ int main(int argc, char *argv[]) {
 
     double start, end;
     start = omp_get_wtime();
-    unsigned int i, j;
+    int i, j;
     double norm;
 
 
-#pragma omg parallel private(i, j)
+#pragma omp parallel private(i, j)
     {
         while (res > EPSILON && iterationCount < MAX_ITERATION_COUNT) {
 
 
 #pragma omp parallel for private (j) schedule(runtime)
             for (i = 0; i < N; i++) {
-                buffer[i] = 0;
+                buffer[i] = - b[i];
                 for (j = 0; j < N; j++) {
                     buffer[i] += A[i * N + j] * x[j];
                 }
             }
-
-
-#pragma omp parallel for schedule(runtime)
-            for (i = 0; i < N; i++) {
-                buffer[i] = buffer[i] - b[i];
-            }
-
 
 #pragma omp single
             norm = 0;
